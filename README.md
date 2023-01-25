@@ -1,5 +1,6 @@
 # CARMEN: A Cellular Automaton Rain Flow Model with Evaporation and Infiltration
 
+### Aim of this project ### 
 This has been a smaller scientific group project where we were given the task to implement a mathematical model to simulate a complex system. The aim of this project was to implement a cellular automatan to simulate water flow dynamics over a real world region from gathered satellite data (hydrological modelling), to ultimately allow investigation of potential flooding for hypotheical scenarios given a data set of a region. This was done by implementing the mathematical model from the scientific article *"A two scale cellular automaton for flow dynamics modeling (2CAFDYM)"* by H. Kassogué et al. in python using object oriented programming.
 
 ### What the project does ### 
