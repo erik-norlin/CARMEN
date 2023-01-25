@@ -29,7 +29,7 @@ class Cell:
         self.I = 0.001  #infiltration intensity
         self.k = 0.001
         self.Qs = 0.1 #self.I / self.k #soil saturation in water, CHECK eq 16 replace 1 with K
-        self.Qds = 0  #surface water detention (0 for this project)
+        self.Qds = 0  #surface water detention
         self.r = None  #water flow resistance on the soil
         self.Kc = None
 
@@ -69,6 +69,16 @@ class Cell:
         self.Qvs_temp = 0 #quantity of evaporated water, temporary for synchronous update
         self.Qvi_temp = 0 #quantity of evaporated water, temporary for synchronous update
 
+    def setState(self):
+        if (self.Qpi < self.Qs) and (self.Qps == 0): # No saturation and no water on surface
+            self.state = 0
+        elif (self.Qpi == self.Qs) and (self.Qps == 0): # Saturation and no water on surface
+            self.state = 1
+        elif (self.Qpi < self.Qs) and (self.Qps > 0): # No saturation and water on surface
+            self.state = 2
+        elif (self.Qpi == self.Qs) and (self.Qps > 0): # Saturation and water on surface
+            self.state = 3
+
     def setNeighbors(self,cUp,cRight,cDown,cLeft):
         self.cUp = cUp
         self.cRight = cRight
@@ -83,6 +93,9 @@ class Cell:
 
     def get_ht(self):
         return self.ht
+
+    def setQds(self):
+        self.Qds = self.Qs/3
         
     def setQr(self,value):
         self.Qr = value
@@ -297,6 +310,7 @@ class Cell:
         self.Kc = 0.5
         self.r = 0.8
         self.I = I_forest
+        self.Qs = self.I / self.k
 
     def set_Kc_r_I_Qs_agriculture(self,value):
         I_culture = 0.01
@@ -304,6 +318,7 @@ class Cell:
         self.Kc = 0.65
         self.r = 0.65
         self.I = I_culture
+        self.Qs = self.I / self.k
 
     def set_Kc_r_I_Qs_settlement(self,value):
         I_settlement = 0.001
@@ -311,3 +326,4 @@ class Cell:
         self.Kc = 0.3
         self.r = 0.99
         self.I = I_settlement
+        self.Qs = self.I / self.k

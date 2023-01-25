@@ -15,6 +15,7 @@ import seaborn as sns
 from scipy.ndimage import convolve, generate_binary_structure
 from itertools import product
 from matplotlib import colors
+import matplotlib.patches as mpatches
 from matplotlib import cm
 from CellObject import Cell
 from PIL import Image
@@ -90,8 +91,28 @@ rainTimeStart = 0
 rainTimeStop = 0.5*T  #let it rain for first half of simulation period
 
 
+# Uncomment for specific landuse
+# II = "forest"
+# II = "settlement"
+#II = "culture"
+II = "Real_Land_Use"
+
+
+# Plot data as a function of t
+Qr_tot = np.zeros((T+1))
+Qpi_tot = Qr_tot.copy()
+Qe_tot = Qr_tot.copy()
+Qi_tot = Qr_tot.copy()
+Qps_tot = Qr_tot.copy()
+Qvs_tot = Qr_tot.copy()
+Qvi_tot = Qr_tot.copy()
+
+
 # Assigning constants to cells as properties; to visualize water distribution on surface
 npQpsValues = np.empty_like(npCells)  #Qps set to NaN if no cell exist
+npQpiValues = np.empty_like(npCells)  
+npStates = np.empty_like(npCells)
+
 for i in range(nRows):
     for j in range(nCols):
         if npCells[i,j] != None:
@@ -103,22 +124,25 @@ for i in range(nRows):
             npCells[i,j].setQvi(Qvi)
             npCells[i,j].setQvs(Qvs)
             npQpsValues[i,j] = Qps
-            npCells[i,j].set_Kc_r_I_Qs(npCells[i,j].landUse)
-            #npCells[i,j].set_Kc_r_I_Qs_forest(npCells[i,j].landUse)  #SETTING ALL CELLS' LAND USE TO SETTLEMENT
+            npQpiValues[i,j] = Qpi
+            npCells[i,j].set_Kc_r_I_Qs(npCells[i,j].landUse)   #SETTING ALL CELLS' LAND USE TO REAL LAND USE
+            # npCells[i,j].set_Kc_r_I_Qs_forest(npCells[i,j].landUse)  #SETTING ALL CELLS' LAND USE TO SETTLEMENT
             #npCells[i,j].set_Kc_r_I_Qs_agriculture(npCells[i,j].landUse)  #SETTING ALL CELLS' LAND USE TO AGRICULTURE
-            #npCells[i,j].set_Kc_r_I_Qs_settlement(npCells[i,j].landUse)  #SETTING ALL CELLS' LAND USE TO SETTLEMENT
+            # npCells[i,j].set_Kc_r_I_Qs_settlement(npCells[i,j].landUse)  #SETTING ALL CELLS' LAND USE TO SETTLEMENT
+            npCells[i,j].setQds()
 
 
 # Saving the surface water quantity before any updates
 npQpsValues = npQpsValues.astype(float) / (25*25) * 1000  #convert from Qps to mm on surface
+npQpiValues = npQpiValues.astype(float) / (25*25) * 1000  #convert from Qpi to mm on surface
 cmap = colors.LinearSegmentedColormap.from_list('custom blue', ['#b2bac2','#1f6dc4'], N=256)
 plt.matshow(npQpsValues,cmap=cmap)
 plt.title('t = 0')
 plt.colorbar()
 plt.clim(0,120)
 plt.savefig('Plots/testInfEva_18jan/rainfall48_48_real/constantScale/t=0.pdf',format='pdf')
-#plt.show()
 plt.clf()
+plt.close()
 
 plt.matshow(npQpsValues,cmap=cmap)
 plt.title('t = 0')
@@ -164,7 +188,7 @@ for t in range(T):
                 npCells[i,j].set_all_lambda()
                 npCells[i,j].setQr_s()
 
-                #adding rain
+                # Adding rain
                 if (i >= rainRegion_iMin and
                     i <= rainRegion_iMax and
                     j >= rainRegion_jMin and
@@ -219,7 +243,7 @@ for t in range(T):
                 Qi0 = npCells[i,j].Qps + npCells[i,j].Qr - npCells[i,j].Qvs
                 Qi1 = min(Qi0,npCells[i,j].I*dt)
                 Qi2 = npCells[i,j].Qs - npCells[i,j].Qpi + npCells[i,j].Qvi
-                npCells[i,j].setQi_temp(min(Qi1,Qi2))
+                npCells[i,j].setQi(min(Qi1,Qi2))
 
 
     # Updating dynamics: Qe, Qr, Qi, Qvi, Qvs, Qpi, Qps for t+1
@@ -228,20 +252,50 @@ for t in range(T):
             if npCells[i,j] != None:
                 npCells[i,j].setQr(npCells[i,j].Qr_temp)
                 npCells[i,j].setQe(npCells[i,j].Qe_temp)
-                npCells[i,j].setQi(npCells[i,j].Qi_temp)
+                # npCells[i,j].setQi(npCells[i,j].Qi_temp)
+
+                # For plotting water quantities
+                Qr_tot[t+1] += npCells[i,j].Qr
+                Qpi_tot[t+1] += npCells[i,j].Qpi
+                Qe_tot[t+1] += npCells[i,j].Qe
+                Qi_tot[t+1] += npCells[i,j].Qi
+                Qps_tot[t+1] += npCells[i,j].Qps
+                Qvs_tot[t+1] += npCells[i,j].Qvs
+                Qvi_tot[t+1] += npCells[i,j].Qvi
+
                 npCells[i,j].setQpi(npCells[i,j].Qpi + npCells[i,j].Qi - npCells[i,j].Qvi)
                 npCells[i,j].setQps(npCells[i,j].Qps + npCells[i,j].Qr - npCells[i,j].Qe - npCells[i,j].Qi - npCells[i,j].Qvs)
                 npCells[i,j].resetQr_temp()
 
+                
+    # To see if we ever reach state s=1 : saturation with no water on surface.
+    ls0 = []
+    ls1 = []
+    ls2 = []
+    ls3 = []
 
-    # Saving surface water quantity to show later        
+
+    # Saving surface and infiltration water quantity to show later        
     for i in range(nRows):
         for j in range(nCols):
             if npCells[i,j] != None:
                 npQpsValues[i,j] = npCells[i,j].Qps
+                npQpiValues[i,j] = npCells[i,j].Qpi
+
+                # Setting states of each cell
+                npCells[i,j].setState()
+                npStates[i,j] = npCells[i,j].state
+                if npStates[i,j] == 0 :
+                    ls0.append(npStates[i,j])
+                elif npStates[i,j] == 1 :
+                    ls1.append(npStates[i,j])
+                elif npStates[i,j] == 2 :
+                    ls2.append(npStates[i,j])
+                elif npStates[i,j] == 3 :
+                    ls3.append(npStates[i,j])
 
 
-    # Saving images of the surface water quantity over the region
+    # Saving images of the water dynamics over the region
     if (t+1) % 10 == 0:
         print('t = ' + str(t+1))
         npQpsValues = npQpsValues.astype(float) / (25*25) * 1000
@@ -256,3 +310,62 @@ for t in range(T):
         plt.title('t = ' + str((t+1)*dt))
         plt.colorbar()
         plt.savefig('Plots/testInfEva_18jan/rainfall48_48_real/runningScale/t=' + str((t+1)*dt) + '.pdf',format='pdf')
+
+
+        plt.figure(2)
+        npQpsValues = npQpsValues.astype(float) / (25*25) * 1000
+        plt.matshow(npQpsValues,cmap=cmap)
+        plt.title('Water on the surface ('+II+'), t = ' + str((t+1)*dt))
+        plt.colorbar()
+        plt.clim(0,120)
+        plt.savefig('Plots/Qps/Qps_'+ II +'/'+II+'_t=' + str((t+1)*dt) + '.jpeg',format='jpeg')
+        plt.close()
+        plt.clf()
+        
+        plt.figure(3)
+        npQpiValues = npQpiValues.astype(float) / (25*25) * 1000
+        plt.matshow(npQpiValues,cmap=cmap)
+        plt.title('Water in the soil ('+II+'), t = ' + str((t+1)*dt))
+        plt.colorbar()
+        plt.clim(0,120)
+        plt.savefig('Plots/Qpi/Qpi_' + II +'/'+II+'_t=' + str((t+1)*dt) + '.jpeg',format='jpeg')
+        plt.close()
+        plt.clf()
+        
+        # Plotting the states of map.
+        plt.figure(4)
+        bounds2=[0,1,2,3]
+        cmap2 = colors.ListedColormap(['red',"magenta","green","orange"])
+        norm2 = colors.BoundaryNorm(bounds2, cmap2.N)
+        plt.colorbar(cm.ScalarMappable(norm=norm2, cmap=cmap2))
+        
+        # Creating legend with color box
+        red_patch = mpatches.Patch(color='red', label='No saturation, no water on surface')
+        magenta_patch = mpatches.Patch(color='magenta', label='Saturation, no water on surface')
+        green_patch = mpatches.Patch(color='green', label='No saturation, water on surface')
+        orange_patch = mpatches.Patch(color='orange', label='Saturation and water on surface')
+        npStates = npStates.astype(float)
+        plt.matshow(npStates,cmap=cmap2)
+        plt.legend(handles=[red_patch,magenta_patch,green_patch,orange_patch],loc='upper left')#, bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=2)
+        plt.title('Map of the cells state ('+II+'),  t = ' + str((t+1)*dt))
+        plt.savefig('Plots/States/States_' + II + '/'+II+'_t='+ str((t+1)*dt) + '.jpeg',format="jpeg")#,bbox_to_anchor=(0.5, -0.05), bbox_inches='tight')
+        plt.close()
+        plt.clf()
+
+
+# Plotting the total water quantites with respect to time
+fig2,ax2 = plt.subplots()
+t_lin = np.linspace(0,T,T+1)
+ax2.plot(t_lin, Qr_tot.astype(float), label='Qr')
+ax2.plot(t_lin, Qe_tot, label='Qe')
+ax2.plot(t_lin, Qi_tot, label='Qi')
+ax2.plot(t_lin, Qpi_tot, label='Qpi')
+ax2.plot(t_lin, Qps_tot, label='Qps')
+ax2.plot(t_lin, Qvi_tot, label='Qvi')
+ax2.plot(t_lin, Qvs_tot, label='Qvs')
+ax2.plot(t_lin, Qvs_tot+Qvi_tot, label='Qv')
+ax2.legend()
+plt.xlabel("time")
+plt.title("Total Surface, Infiltrated, Evaporated water, "+II)
+plt.savefig('Plots/Total_water_quantity/Tot_'+II+'/'+II+'_t=' + str((T)*dt) + '.jpeg',format="jpeg")
+plt.close()
