@@ -10,9 +10,9 @@ The program allows one to observe how the water flow dynamics over a particular 
 There's no installation required to run this project. Just connect to the repository and run the main program. To choose between different soil types over the studied region, simply uncomment the lines of code in both the main program and the CellObject class where it specifies landuse and soil type. Then, run the program and observe the magic (plots are found in the Plots folder).
 
 ### Creators of this project ### 
-* Thibault Desjonquères,
-* Paulina Essunger,
-* Hannes Nilsson,
+* Thibault Desjonquères
+* Paulina Essunger
+* Hannes Nilsson
 * Erik Norlin
 
 
