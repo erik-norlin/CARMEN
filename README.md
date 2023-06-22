@@ -11,10 +11,10 @@ There's no installation required to run this project. Just connect to the reposi
 
 ![Water running down landscape](https://github.com/erik-norlin/CARMEN/blob/master/Plots/Qps/Qps_forest/forest_t%3D360000.jpeg?raw=true)
 
-For more details, please read the project report.
-
 ### Creators of this project ### 
 * Thibault Desjonquères
 * Paulina Essunger
 * Hannes Nilsson
 * Erik Norlin
+
+For more details, please read the project report.
