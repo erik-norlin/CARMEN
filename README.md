@@ -17,7 +17,7 @@ For more details, please read the project report.
 * Hannes Nilsson
 * Erik Norlin
 
-!(https://github.com/erik-norlin/CARMEN/blob/master/Plots/Qps/Qps_forest/forest_t%3D360000.jpeg?raw=true)
+![Water running down landscape](https://github.com/erik-norlin/CARMEN/blob/master/Plots/Qps/Qps_forest/forest_t%3D360000.jpeg?raw=true)
 
 
 
