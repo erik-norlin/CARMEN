@@ -18,4 +18,3 @@ For more details, please read the project report.
 * Paulina Essunger
 * Hannes Nilsson
 * Erik Norlin
-* 
